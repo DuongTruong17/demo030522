@@ -1,0 +1,11 @@
+050122: thay đổi url stream: ip = 'rtsp://admin:Duongtruong@192.168.1.233/Streaming/Channels/2'
+060122: sửa phần phát nhạc quay lên chương trình nhận uart
+110122: sử dụng VideoStream read camera
+150122: thêm nhận coin
+170122: ok ocin PC - MCU
+220122: tach nhan coin thanh rieng 1 thread, dieu khien dong co o 1 thread
+230122: thêm phần set coin khi lỗi sử dụng while truyền nhận
+260122: phương án điều khiển không dùng tay xác định lệnh
+050322: thêm phần điều khiển ko dùng tay, 2 loại nhạc cho mỗi hướng quay
+==== ứng với code thiết bị 040322======
+--vao ha => bo chuong trinh coin
