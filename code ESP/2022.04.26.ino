@@ -214,7 +214,7 @@ int counting;
 
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);
-  Serial.begin(115200);
+  Serial.begin(115200);//sssss
   delay(10);
 
   Serial.println(F("Adafruit MQTT demo"));
