@@ -256,35 +256,6 @@ def on_message_come(client, userdata, msg):
 def on_subscribe():
     mqttclient.subscribe(ngoaiVi, 0)
     mqttclient.on_message = on_message_come
-
-# Define callback functions which will be called when certain events happen.
-# def connected(client):
-#     """Connected function will be called when the client is connected to
-#     Adafruit IO.This is a good place to subscribe to feed changes.  The client
-#     parameter passed to this function is the Adafruit IO MQTT client so you
-#     can make calls against it easily.
-#     """
-#     # Subscribe to changes on a feed named Counter.
-#     print('Subscribing to Feed {0}'.format(FEED_ID))
-#     client.subscribe(FEED_ID)
-#     client.subscribe(ngoaiVi)
-#     print('Waiting for feed data...')
-
-# def disconnected(client):
-#     """Disconnected function will be called when the client disconnects."""
-#     sys.exit()
-
-# def message(client, feed_id, payload):
-#     global dataRec, dataRecOld, dataRecTemp
-#     """Message function will be called when a subscribed feed has a new value.
-#     The feed_id parameter identifies the feed, and the payload parameter has
-#     the new value.
-#     """
-#     print('Feed {0} received new value: {1}'.format(feed_id, payload))
-#     dataRecOld = payload
-#     if feed_id == ngoaiVi and dataRecOld != dataRec:
-#         dataRecTemp = dataRec = payload
-        # client.publish(ngoaiVi,"demooooo")
         
 
 
@@ -300,8 +271,9 @@ global phanHoi, time30s, dieuKienDocXu, dieuKienRun, tempTime30s, runMode
 global trangThaiMotor, state, tempBanDau
 global tempLeft, tempRight, tempBet
 global numTrai, numPhai, numBet, phatXongLan2, countRelay
-global time1p
+global time1p, runStart
 time1p = 0
+runStart = 0
 numTrai = numPhai = numBet = phatXongLan2 = 0
 countRelay = 0
 (tempLeft, tempRight, tempBet) = (0, 0, 0)
@@ -315,25 +287,39 @@ uart = True
 runNhac = 0
 #ngoai vi mqtt
 def chuongTrinhNgoaiVi():
-    global uart, conLeft, conRight, conBet, dataRec, runNhac
+    global uart, conLeft, conRight, conBet, dataRec, runNhac, runStart
     global phanHoi, tempp, song, time3s, readXu, dieuKienDocXu, runMode
     global trangThaiMotor, viTriHienTai, numberCoin, dieuKienRun, tempBanDau
     
     while 1:
         # print("aajejek")
         # time.sleep(2)
-        if dataRec == b'a\n' and runNhac == 0:#ben trai
-            #ser.write(b'z*') # bao nhan ve goc
-            # client.publish(ngoaiVi, "z*")
-            on_publish(conQuay, "z*", 0)
-            trangThaiMotor = 1 
-            conRight = 0
-            conBet = 0
-            # chuong trinh phat nhac
-            tempp = 3 
-            song = song3
-            phatNhac()
-            runNhac = 1
+        if dataRec == b'a\n': #ben trai
+            if runStart == 0:
+                on_publish(conQuay, "z*", 0)
+                if runNhac == 0:
+                    trangThaiMotor = 1 
+                    conRight = 0
+                    conBet = 0
+                    # chuong trinh phat nhac
+                    tempp = 3 
+                    song = song3
+                    phatNhac()
+                    runNhac = 1
+                dataRec = 0
+                runStart = 1
+            else:
+                
+                if runNhac == 0:
+                    on_publish(conQuay, "z*", 0)
+                    trangThaiMotor = 1 
+                    conRight = 0
+                    conBet = 0
+                    # chuong trinh phat nhac
+                    tempp = 3 
+                    song = song3
+                    phatNhac()
+                    runNhac = 1
         elif dataRec == b'b\n' and runNhac == 0:
             trangThaiMotor = 2
             conLeft = 0
@@ -392,6 +378,8 @@ def chuongTrinhNgoaiVi():
             # client.publish(ngoaiVi, "W*")
             on_publish(conQuay, "W*", 0)
             tempBanDau = 1    
+            runStart = 1
+            dataRec = 0 # 050322
             
 t1 = threading.Thread(target=chuongTrinhNgoaiVi)# phuc vu UART
 t1.daemon = True
@@ -408,6 +396,7 @@ tipIds = [4, 8, 12, 16, 20]
 tempBanDau = None
 
 # time.sleep(2)
+# on_publish(conQuay, "$*", 0)
 # ser.write(b'$*')
 
 # set Coin trong truong hop loi
@@ -746,10 +735,27 @@ def xuLyGocNghieng():
 # client.loop_background()       
 on_mqtt_connect()
 on_subscribe()   
+
+time.sleep(2)
+on_publish(conQuay, "$*", 0)
+time.sleep(4)
+while runStart != 1:
+   on_publish(conQuay, "$*", 0) 
+   time.sleep(4)
+
+# set Coin trong truong hop loi
+if numCoinOld != None and numCoinCheck != '' and int(numCoinCheck) != 0:
+    while tempBanDau == None:
+        pass
+    # while int(numCoinCheck) != (numberCoin):
+    #     uartXu.write(bytes(numCoinOld, encoding='utf8'))
+    #     time.sleep(0.5)
+
+#them xu tro lai khi loi trong qua trinh play
 while True: #threaded_camera.capture.isOpened(): #if self.capture.isOpened(): #cap.isOpened()
     # dieuKienRunDongCo()
     
-    xuLyGocNghieng()
+    if tempBanDau == 1: xuLyGocNghieng()
    
     if cv2.waitKey(1) & 0xFF == ord('q'): 
         break
@@ -759,3 +765,4 @@ cam.stop()
 cv2.destroyAllWindows()
 # client.loop_stop()
 # client.disconnect()
+mqttclient.disconnect()
